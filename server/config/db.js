@@ -14,7 +14,11 @@ const connectDB = async () => {
   } catch (err) {
     console.log('[MongoDB] Local MongoDB server connection failed or not running. Starting in-memory MongoMemoryServer...');
     try {
-      mongoMemoryServer = await MongoMemoryServer.create();
+      mongoMemoryServer = await MongoMemoryServer.create({
+        binary: {
+          version: '7.0.3',
+        },
+      });
       const uri = mongoMemoryServer.getUri();
       const conn = await mongoose.connect(uri);
       console.log(`[MongoDB] Connected to in-memory database at ${uri}`);
