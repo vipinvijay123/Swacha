@@ -5,28 +5,37 @@ const seedData = require('../utils/seedData');
 let mongoMemoryServer = null;
 
 const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 2000,
-    });
-    console.log(`[MongoDB] Connected to database: ${conn.connection.host}:${conn.connection.port}/${conn.connection.name}`);
-    await seedData();
-  } catch (err) {
-    console.log('[MongoDB] Local MongoDB server connection failed or not running. Starting in-memory MongoMemoryServer...');
+  const mongoUri = process.env.MONGO_URI;
+  const isRemote = mongoUri && !mongoUri.includes('127.0.0.1') && !mongoUri.includes('localhost');
+
+  if (isRemote) {
     try {
-      mongoMemoryServer = await MongoMemoryServer.create({
-        binary: {
-          version: '7.0.3',
-        },
+      const conn = await mongoose.connect(mongoUri, {
+        serverSelectionTimeoutMS: 5000,
       });
-      const uri = mongoMemoryServer.getUri();
-      const conn = await mongoose.connect(uri);
-      console.log(`[MongoDB] Connected to in-memory database at ${uri}`);
+      console.log(`[MongoDB] Connected to remote database: ${conn.connection.host}`);
       await seedData();
-    } catch (memoryErr) {
-      console.error(`[MongoDB Error] Failed to connect: ${memoryErr.message}`);
-      process.exit(1);
+      return;
+    } catch (err) {
+      console.warn(`[MongoDB] Remote connection failed (${err.message}). Falling back to in-memory server...`);
     }
+  }
+
+  // Use MongoMemoryServer (In-Memory Database)
+  console.log('[MongoDB] Initializing in-memory MongoMemoryServer...');
+  try {
+    mongoMemoryServer = await MongoMemoryServer.create({
+      binary: {
+        version: process.env.MONGOMS_VERSION || '7.0.3',
+      },
+    });
+    const uri = mongoMemoryServer.getUri();
+    const conn = await mongoose.connect(uri);
+    console.log(`[MongoDB] Connected to in-memory database at ${uri}`);
+    await seedData();
+  } catch (memoryErr) {
+    console.error(`[MongoDB Error] Failed to connect to in-memory database: ${memoryErr.message}`);
+    process.exit(1);
   }
 };
 
