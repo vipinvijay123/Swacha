@@ -8,6 +8,8 @@ const errorHandler = require('./middleware/errorHandler');
 
 dotenv.config();
 
+process.env.MONGOMS_VERSION = process.env.MONGOMS_VERSION || '7.0.3';
+
 const app = express();
 
 // Connect Database & Auto-Seed
