@@ -2,8 +2,13 @@ import axios from 'axios';
 
 const getBaseURL = () => {
   const envUrl = import.meta.env.VITE_API_URL;
-  if (!envUrl) return '/api';
-  return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
+  if (envUrl) {
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return 'https://swachhta-compliance-backend.onrender.com/api';
+  }
+  return '/api';
 };
 
 const API = axios.create({
