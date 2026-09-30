@@ -42,8 +42,9 @@ const registerUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  const cleanEmail = email ? email.trim().toLowerCase() : '';
 
-  const user = await User.findOne({ email }).populate('assignedFacility', 'name facilityId');
+  const user = await User.findOne({ email: cleanEmail }).populate('assignedFacility', 'name facilityId');
 
   if (user && (await user.matchPassword(password))) {
     if (user.status === 'inactive') {
